@@ -1,0 +1,7 @@
+{
+  "host": "127.0.0.1",
+  "database": "messenger",
+  "user": "postgres",
+  "password": "postgres",
+  "port": "5432"
+}
