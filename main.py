@@ -239,7 +239,7 @@ if __name__ == '__main__':
                             elif option == 4:
                                 break
                 elif option == 2:
-                    email, fullname, birth_of_date, username, password, re_password, lives_in = "", "", "", "", "", "", ""
+                    email, fullname, birth_of_date, username, password, lives_in = "", "", "", "", "", ""
                     sex = 1
                     flag = 0
                     while True:
@@ -252,7 +252,7 @@ if __name__ == '__main__':
                                     if flag:
                                         pass
                                     else:
-                                        print "Sex: 0-->Male | 1 --> Female"
+                                        print "(Sex) 0 -> male,1 -> female, Other"
                                         sex = int(raw_input('Sex:\t'))
                                         print "lives in can be empty"
                                         lives_in = raw_input("lives_in:\t")
@@ -287,14 +287,10 @@ if __name__ == '__main__':
                                         print " fullname is empty. Please enter your fullname"
                         else:
                             email = raw_input("email:\t")
-                            if not is_email_existed(email):
+                            if not is_email_validated(email):
                                 print "email is invalidated. Please enter email again!!"
             else:
-                print 'Connecting to the Database database...'
-                time.sleep(1)
-                count += 1
-                if count == 5:
-                    print "Can not connect to DB"
-                    break
+                print "Can not connect to DB"
+                break
         except Exception as e:
             print(e)

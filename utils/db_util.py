@@ -36,7 +36,6 @@ def query_db(query, is_data_fetched=False):
                 cur.close()
                 return 1
 
-            print "There is no component"
             return 0
 
     except (Exception, sqlite3.DatabaseError) as error:

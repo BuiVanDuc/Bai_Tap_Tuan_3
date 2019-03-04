@@ -8,7 +8,7 @@ from utils.password_util import encrypt_string
 def register_account(email, fullname, birth_of_date, sex, username, password, lives_in=None):
     query = "INSERT INTO USER_MESSENGER(email, fullname, birth_of_date, sex, username, password, lives_in)" \
             "VALUES " \
-            "('{}','{}',{},'{}','{}','{}')".format(email, fullname, birth_of_date, sex, username,
+            "('{}','{}',{},'{}','{}','{}','{}')".format(email, fullname, birth_of_date, sex, username,
                                                    password, lives_in)
     if query_db(query):
         return 1
