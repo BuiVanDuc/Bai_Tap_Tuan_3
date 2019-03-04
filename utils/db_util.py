@@ -1,46 +1,60 @@
-import psycopg2
+import sqlite3
 
-from utils.file_util import load_config
-from psycopg2.extras import RealDictCursor
+from message_mng.settings import DATABASE_PATH
 
-def connect_to_pgsql(config_filename):
+
+def connect_to_sqlite(db_path=DATABASE_PATH):
     try:
-        # read connection parameters
-        params = load_config(config_filename)
-        # connect to the PostgreSQL server
-        print('Connecting to the PostgreSQL database...')
-        conn = psycopg2.connect(**params)
+        # connect to the sqlite server
+        conn = sqlite3.connect(db_path)
         if conn is not None:
-            print('Successfully connect to pgsql')
+            print('Successfully connect to Database')
             return conn
-    except (Exception, psycopg2.DatabaseError) as error:
-        print ("CONNECTING TO THE PGSQL IS ERROR" + ":" + str(error))
+    except (Exception, sqlite3.DatabaseError) as error:
+        print ("CONNECTING TO THE DB IS ERROR" + ":" + str(error))
 
 
-def query_db(query, config_filename='database.json', is_fetching_data=False):
+def query_db(query, is_data_fetched=False):
     try:
-        conn = connect_to_pgsql(config_filename)
+        conn = connect_to_sqlite()
         if conn is not None:
             # create a cursor
-            cur = conn.cursor(cursor_factory=RealDictCursor)
+            cur = conn.cursor()
             # execute a statement
-            cur.execute(query)
-            status= cur.statusmessage
-
-            if is_fetching_data:
-                data = cur.fetchall()
-                # commit the changes to the database
+            if is_data_fetched:
+                list_data = dict_gen(cur.execute(query))
                 conn.commit()
                 # close communication with the database
                 cur.close()
-                return data
-            # commit the changes to the database
-            conn.commit()
-            # close communication with the database
-            cur.close()
-            if int(status[-1]) > 0:
+                return list_data
+
+            cur.execute(query)
+
+            if cur.rowcount ==1 or cur.lastrowid:
+                conn.commit()
+                # close communication with the database
+                cur.close()
                 return 1
+
+            print "There is no component"
             return 0
-    except (Exception, psycopg2.DatabaseError) as error:
+
+    except (Exception, sqlite3.DatabaseError) as error:
         print('Query is not valid' + ":" + str(error))
     return 0
+
+
+def dict_gen(curs):
+    ''' From Python Essential Reference by David Beazley
+    '''
+    import itertools
+    field_names = [d[0].lower() for d in curs.description]
+
+    rows = curs.fetchall()
+    if not rows:
+        return
+    list_data = list()
+    for row in rows:
+        list_data.append(dict(itertools.izip(field_names, row)))
+
+    return list_data

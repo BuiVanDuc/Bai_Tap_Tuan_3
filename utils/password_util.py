@@ -1,6 +1,5 @@
-import re
 import hashlib
-import bcrypt
+import re
 
 
 def encrypt_string(hash_string):
@@ -9,20 +8,18 @@ def encrypt_string(hash_string):
     return sha_signature
 
 def validate_password(password):
+    warning = "For your account security, your new password must:\n" \
+              "+ Contain at least 8 characters\n" \
+              "+ Contain any combination of letters, digits, and special characters\n"
     if len(password) < 8:
-        print("Make sure your password is at lest 8 letters")
+        print(warning)
+    elif re.search('[a-zA-Z0-9]', password) is None:
+        print(warning)
+    elif re.search('[!@#$%^*_=]', password) is None:
+        print(warning)
     else:
-        if re.search('[0-9]', password) is None:
-            print("Make sure your password has a number in it")
-            return 0
-        elif re.search('[A-Z]', password) is None:
-            print("Make sure your password has a capital letter in it")
-            return 0
-        elif re.search('[!@#$%^*_=]', password) is None:
-            print("Make sure your password has a special character in it")
-            return 0
         return 1
-    print ('password is valid')
+
     return 0
 
 if __name__ == '__main__':

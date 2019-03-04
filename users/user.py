@@ -1,42 +1,18 @@
 from typing import Any, Union
 
 from utils.checking_data_util import is_blocked
-from utils.date_util import validate_date
 from utils.db_util import query_db
-from utils.password_util import validate_password, encrypt_string
+from utils.password_util import encrypt_string
 
 
-def register_account(fullname, birth_of_date, sex, username, password, re_password, lives_in=None):
-    if len(fullname) > 0:
-        if len(birth_of_date) > 0:
-            if validate_date(birth_of_date):
-                if len(username) > 0:
-                    if len(password) > 0:
-                        if validate_password(password) == 1:
-                            if password == re_password:
-                                password = encrypt_string(password)
-                                query = "INSERT INTO USER_MESSENGER(fullname, birth_of_date, sex, username, password, lives_in)" \
-                                        "VALUES " \
-                                        "('{}','{}',{},'{}','{}','{}')".format(fullname, birth_of_date, sex, username,
-                                                                               password, lives_in)
-                                if query_db(query):
-                                    print("register successfully. You can login")
-                                    return 1
-                        else:
-                            print('password is invalid')
-                    else:
-                        print('password is empty')
-                else:
-                    print ('username is empty')
-            else:
-                print ('date of birth is invalid')
-        else:
-            print('date of birth is empty')
-    else:
-        print ('fullname is empty')
-    print('Please try register again')
+def register_account(email, fullname, birth_of_date, sex, username, password, lives_in=None):
+    query = "INSERT INTO USER_MESSENGER(email, fullname, birth_of_date, sex, username, password, lives_in)" \
+            "VALUES " \
+            "('{}','{}',{},'{}','{}','{}')".format(email, fullname, birth_of_date, sex, username,
+                                                   password, lives_in)
+    if query_db(query):
+        return 1
     return 0
-
 
 def login(username, password):
     if len(username) > 0 and len(password) > 0:
@@ -46,7 +22,7 @@ def login(username, password):
                 "FROM USER_MESSENGER " \
                 "WHERE username='{}' and password='{}'".format(username, encrypted_password)
 
-        data_user = query_db(query, is_fetching_data=True)
+        data_user = query_db(query, is_data_fetched=True)
 
         if data_user and len(data_user) > 0:
             for data in data_user:
@@ -89,7 +65,7 @@ def search_username(username):
             "FROM user_messenger\t" \
             "WHERE username like '%{}%'\torder by username ASC ".format(username)
 
-    list_username = query_db(query, is_fetching_data=True)  # type: Union[int, Any]
+    list_username = query_db(query, is_data_fetched=True)  # type: Union[int, Any]
 
     if list_username and len(list_username) > 0:
         return list_username
@@ -114,3 +90,7 @@ def block_user(user_id, user_blocked):
         print('Can not blocked')
 
     return 0
+
+
+if __name__ == '__main__':
+    register_account("Nguyen Van Tuan", "1988-02-12", "")

@@ -10,7 +10,7 @@ def show_list_friends(user_id):
             "ON message.sender_id = user_friend.friend_id or message.recipient_id=user_friend.friend_id\t" \
             "WHERE user_friend.user_id ={} ORDER BY message.delivered_time DESC".format(user_id)
 
-    list_friends_in_message = query_db(query, is_fetching_data=True)
+    list_friends_in_message = query_db(query, is_data_fetched=True)
     list_friend_ids = list()
     list_friends = list()
 
@@ -26,7 +26,7 @@ def show_list_friends(user_id):
                 "FROM USER_FRIEND\t" \
                 "WHERE friend_id NOT IN {}".format(tuple(list_friend_ids))
 
-        list_friends_not_in_message = query_db(query, is_fetching_data=True)
+        list_friends_not_in_message = query_db(query, is_data_fetched=True)
         if len(list_friends_not_in_message) > 0:
             for friend in list_friends_not_in_message: list_friends.append(friend)
     else:
@@ -35,7 +35,7 @@ def show_list_friends(user_id):
                 "FROM USER_FRIEND\t" \
                 "WHERE user_id ={}\torder by nickname DESC".format(tuple(user_id))
 
-        list_friends_not_in_message = query_db(query, is_fetching_data=True)
+        list_friends_not_in_message = query_db(query, is_data_fetched=True)
         if len(list_friends_not_in_message) > 0:
             for friend in list_friends_not_in_message: list_friends.append(friend)
 
@@ -43,7 +43,7 @@ def show_list_friends(user_id):
 
 
 def add_friend(friend_id, user_id):
-    data = is_existed_user(friend_id, is_fetching_data=True)
+    data = is_existed_user(friend_id, is_data_fetched=True)
     if data and len(data) > 0:
         nickname = data[0]['username']
         if is_existed_user(friend_id):
@@ -83,7 +83,7 @@ def detail_friend(friend_id):
             "FROM USER_MESSENGER\t" \
             "WHERE USER_MESSENGER.id={}".format(friend_id)
 
-    list_info_friend = query_db(query, is_fetching_data=True)
+    list_info_friend = query_db(query, is_data_fetched=True)
 
     return list_info_friend
 
@@ -94,7 +94,7 @@ def group_friend_by_lives_in(user_id):
             "ON user_friend.friend_id = user_messenger.id " \
             "WHERE user_friend.user_id = {} ORDER BY user_messenger.lives_in ASC".format(user_id)
 
-    list_friends = query_db(query, is_fetching_data=True)
+    list_friends = query_db(query, is_data_fetched=True)
     ret_data = dict()
 
     for friend in list_friends:
@@ -114,6 +114,9 @@ def search_friend_by_username(user_id, nickname):
             "FROM user_friend " \
             "WHERE user_id ='{}' and nickname like '%{}%'".format(user_id, nickname)
 
-    list_friends = query_db(query, is_fetching_data=True)
+    list_friends = query_db(query, is_data_fetched=True)
 
     return list_friends
+
+if __name__ == '__main__':
+   print group_friend_by_lives_in(1)
