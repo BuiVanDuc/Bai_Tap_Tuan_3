@@ -10,6 +10,9 @@ EMAIL_REGEX = re.compile(r"[^@]+@[^@]+\.[^@]+")
 
 def is_email_validated(email):
     if EMAIL_REGEX.match(email):
-        return 1
+        return True
     else:
-        return 0
+        return False
+
+if __name__ == '__main__':
+    print is_email_validated('hehe@gmail.com')

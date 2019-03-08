@@ -1,122 +1,346 @@
-from utils.checking_data_util import is_existed_friend, is_existed_user, is_blocked
-from utils.db_util import query_db
+from functions import group_friend_by_lives_in, detail_friend, is_friend_existed, \
+    add_friend, search_friend, view_friends, remove_friend, view_friends_by_contact_time
+from messages.functions import sent_message
+from messenger_mng.messenger_mng import display_menu
+from users.functions import block, remove_block, view_list_block, is_blocked
+from users.functions import search_username
 
 
-def show_list_friends(user_id):
-    # Query friend in message
-    query = "SELECT user_friend.friend_id, user_friend.nickname\t" \
-            "FROM user_friend\t" \
-            "INNER JOIN MESSAGE\t" \
-            "ON message.sender_id = user_friend.friend_id or message.recipient_id=user_friend.friend_id\t" \
-            "WHERE user_friend.user_id ={} ORDER BY message.delivered_time DESC".format(user_id)
+def display_search_friend(user_id, username):
+    list_friends = search_friend(user_id, username)
 
-    list_friends_in_message = query_db(query, is_data_fetched=True)
-    list_friend_ids = list()
-    list_friends = list()
-
-    if len(list_friends_in_message) > 0:
-        for friend in list_friends_in_message:
-            if friend['friend_id'] not in list_friend_ids:
-                list_friend_ids.append(friend['friend_id'])
-                list_friends.append(friend)
-
-    if len(list_friend_ids) > 0:
-        # Query friend not in message
-        query = "SELECT friend_id, nickname\t" \
-                "FROM USER_FRIEND\t" \
-                "WHERE friend_id NOT IN {}".format(tuple(list_friend_ids))
-
-        list_friends_not_in_message = query_db(query, is_data_fetched=True)
-        if len(list_friends_not_in_message) > 0:
-            for friend in list_friends_not_in_message: list_friends.append(friend)
-    else:
-        # have no any friend in message:
-        query= "SELECT friend_id, nickname\t" \
-                "FROM USER_FRIEND\t" \
-                "WHERE user_id ={}\torder by nickname DESC".format(tuple(user_id))
-
-        list_friends_not_in_message = query_db(query, is_data_fetched=True)
-        if len(list_friends_not_in_message) > 0:
-            for friend in list_friends_not_in_message: list_friends.append(friend)
-
-    return list_friends
-
-
-def add_friend(friend_id, user_id):
-    data = is_existed_user(friend_id, is_data_fetched=True)
-    if data and len(data) > 0:
-        nickname = data[0]['username']
-        if is_existed_user(friend_id):
-            if is_existed_friend(user_id, friend_id):
-                print "Friend is existing"
-                return 1
-            query = "INSERT INTO USER_FRIEND(user_id, friend_id, nickname)\t" \
-                    "VALUES " \
-                    "({},{},'{}')".format(user_id, friend_id, nickname)
-
-            adding_result = query_db(query)
-
-            if adding_result:
-                print('add friend successfully')
-                return 1
+    if list_friends and len(list_friends) > 0:
+        print list_friends
+        try:
+            print "Choose number in list to sent message"
+            index = raw_input('Choose number:\t')
+            index = int(index)
+            friend_id = index - 1
+            if friend_id in list_friends['user_id']:
+                return friend_id
             else:
-                print "user have been a friend"
-        else:
-            print "Can not add friend"
+                print "Invalid option, please choose number in list"
+                return -1
+        except Exception as Ex:
+            print (Ex)
+            return -1
     else:
-        print('User friend is not exist')
-    return 0
-
-def edit_nicknames(friend_id, new_nickname):
-    query = "UPDATE user_friend\t" \
-            "SET nickname='{}'\tWHERE friend_id={}".format(new_nickname, friend_id)
-
-    if query_db(query):
-        print " edit successfully"
-        return 1
-    print "edit unsuccessfully"
-    return 0
+        print 'No results found'
+        return -1
 
 
-def detail_friend(friend_id):
-    query = "SELECT USER_MESSENGER.fullname, USER_MESSENGER.sex, USER_MESSENGER.birth_of_date, USER_MESSENGER.username, USER_MESSENGER.lives_in\t" \
-            "FROM USER_MESSENGER\t" \
-            "WHERE USER_MESSENGER.id={}".format(friend_id)
+def display_group_friend_by_city(user_id):
+    list_friends = group_friend_by_lives_in(user_id)
 
-    list_info_friend = query_db(query, is_data_fetched=True)
+    if list_friends and len(list_friends) > 0:
+        try:
+            print '''
+                   0: Exit
+                   Other number(in list): view detail a friend
+            '''
+            index = raw_input('Choose number:\t')
+            index = int(index)
+            if index == 0:
+                print "Exit"
+            elif index > 0:
+                friend_id = index - 1
+                if friend_id in list_friends['user_id']:
+                    return friend_id
+            else:
+                print "Invalid option, please choose number in list"
+                return -1
+        except Exception as Ex:
+            print (Ex)
+            return -1
+    else:
+        print "No Friends"
 
-    return list_info_friend
 
-def group_friend_by_lives_in(user_id):
-    query = "SELECT user_friend.friend_id,  user_friend.nickname, user_messenger.lives_in " \
-            "FROM user_friend " \
-            "INNER JOIN user_messenger " \
-            "ON user_friend.friend_id = user_messenger.id " \
-            "WHERE user_friend.user_id = {} ORDER BY user_messenger.lives_in ASC".format(user_id)
+def display_list_friend(user_id):
+    list_friends = view_friends(user_id)
 
-    list_friends = query_db(query, is_data_fetched=True)
-    ret_data = dict()
+    if list_friends and len(list_friends) > 0:
+        print list_friends
+        try:
+            print "Choose number in list to sent message"
+            index = raw_input('Choose number:\t')
+            index = int(index)
+            friend_id = index - 1
+            if friend_id in list_friends['user_id']:
+                print "To {}".format(list_friends[friend_id]['name'])
+                return friend_id
+            else:
+                print "Invalid option, please choose number in list"
+                return -1
+        except Exception as Ex:
+            print (Ex)
+            return -1
+    else:
+        print "Have no friend"
+        return -1
 
-    for friend in list_friends:
-        lives_in = friend['lives_in'].lower()
 
-        if lives_in in ret_data:
-            ret_data[lives_in].append(friend['nickname'])
+def display_view_friends_by_contact_time(user_id):
+    list_friends = view_friends_by_contact_time(user_id)
+
+    if list_friends and len(list_friends) > 0:
+        index = 0
+        for friend in list_friends:
+            index += 1
+            print "{}. {}".format(index, friend['nickname'])
+
+        try:
+            print '''
+                    0: Exit
+                    Other number (in list): view detail a friend
+                  '''
+
+            number = int(raw_input("Choose number:\t"))
+
+            if number == 0:
+                print "Exit"
+            elif 0 < number <= len(list_friends):
+                index = number - 1
+                friend_id = list_friends[index]['friend_id']
+                friend = detail_friend(friend_id)
+
+                for key, val in friend[0].items():
+                    print key, ":", val
+
+                print'''
+                        0: Exit
+                        1: Reply
+                    '''
+
+                number = int(raw_input("Choose number:\t"))
+                if number == 0:
+                    print "Exit"
+                elif number == 1:
+                    print "To {}".format(list_friends[index]['nickname'])
+                    message_content = raw_input("Type a message:\t")
+                    if message_content and len(message_content) > 0:
+                        if is_blocked(user_id, friend_id) ==1:
+                            print "You have blocked {}. Unblock to sent message!!".format(list_friends[index]['nickname'])
+                            return -1
+                        if is_blocked(friend_id, user_id) ==2:
+                            print "You were blocked by {}. Can not sent message!!.".format(list_friends[index]['nickname'])
+                            return -1
+                        elif is_blocked(friend_id, user_id) == 0:
+                            if sent_message(friend_id, message_content, user_id):
+                                print "Sent message successfully!!"
+                        else:
+                            print "Can not sent message"
+                    else:
+                        print "Message content is empty"
+                        return -1
+                else:
+                    print "Invalid option, please choose: 0 or 1"
+                    return -1
+            else:
+                print "Invalid option"
+                return -1
+
+        except Exception as Ex:
+            print (Ex)
+            return -1
+    else:
+        print 'No Friend'
+
+
+def display_view_friend(user_id):
+    while True:
+        print '''
+            1. List friends
+            2. Group friends by city
+            3. Exit
+            '''
+        try:
+            option = int(raw_input('Choose option:\t'))
+            if option == 1:
+                display_view_friends_by_contact_time(user_id)
+            elif option == 2:
+                groups_city = group_friend_by_lives_in(user_id)
+
+                if groups_city and len(groups_city) > 0:
+                    for key, val in groups_city.items():
+                        print key
+                        index = 0
+                        count = 0
+                        for username in val:
+                            index += 1
+                            print "{}. {}".format(index, username)
+                        count += 1
+                else:
+                    print "No Friend"
+            elif option == 3:
+                break
+            else:
+                print "Invalidate option, please option 1, 2 or 3"
+        except Exception as Ex:
+            print (Ex)
+            return -1
+
+
+def display_add_friend(user_id):
+    try:
+        username = raw_input("Search:\t")
+        if username and len(username) > 0:
+            list_username = search_username(username)
+
+            if list_username and len(list_username) > 0:
+                index = 0
+
+                for username in list_username:
+                    index += 1
+                    print "{}. {}".format(index, username['username'])
+
+                print "Choose number (in list) to add friend"
+                number = int(raw_input("number:\t"))
+
+                if 0 < number <= len(list_username):
+                    index = number - 1
+                    friend_id = list_username[index]['id']
+                    username = list_username[index]['username']
+                    # Check friend is existed:
+                    if is_friend_existed(user_id, friend_id):
+                        print "Can not add.Friend is existed !!"
+                        return -1
+                    else:
+                        if friend_id == user_id:
+                            print "Can not add friends with yourself!!"
+                            return -1
+                        elif add_friend(user_id, friend_id, username):
+                            print "Add friend successfully"
+                        else:
+                            print "Can not add friend!!"
+                            return -1
+                else:
+                    print "Invalid number, please try again!!"
+                    return -1
+            else:
+                print "No result"
+                return -1
         else:
-            ret_data[lives_in] = list()
-            ret_data[lives_in].append(friend['nickname'])
+            print "username is empty. please enter a username"
+            return -1
+    except Exception as Ex:
+        print (Ex)
+        return -1
 
-    return ret_data
+
+def display_remove_friend(user_id):
+    try:
+        list_friend = view_friends_by_contact_time(user_id)
+
+        if list_friend and len(list_friend) > 0:
+            index = 0
+            for friend in list_friend:
+                index += 1
+                print "{}. {}".format(index, friend['nickname'])
+
+            print "Choose number in list friend to remove"
+            number = int(raw_input("Number:\t"))
+            if 0 < number <= len(list_friend):
+                index = number - 1
+                friend_id = list_friend[index]['friend_id']
+                if remove_friend(user_id, friend_id):
+                    print "Remove successfully!!"
+                else:
+                    print "Can not Remove"
+            else:
+                print "Invalid option, please try again"
+        else:
+            print "No friend"
+    except Exception as Ex:
+        print(Ex)
+        return -1
 
 
-def search_friend_by_username(user_id, nickname):
-    query = "SELECT friend_id, nickname " \
-            "FROM user_friend " \
-            "WHERE user_id ='{}' and nickname like '%{}%'".format(user_id, nickname)
+def display_block_friend(user_id):
+    try:
+        list_friend = view_friends_by_contact_time(user_id)
 
-    list_friends = query_db(query, is_data_fetched=True)
+        if list_friend and len(list_friend) > 0:
+            index = 0
+            for friend in list_friend:
+                index += 1
+                print "{}. {}".format(index, friend['nickname'])
 
-    return list_friends
+            print "Choose number in list friend block"
+            number = int(raw_input("Number:\t"))
+            if 0 < number <= len(list_friend):
+                index = number - 1
+                friend_id = list_friend[index]['friend_id']
+                if is_blocked(user_id, friend_id) == 1:
+                    print "Bock is existed!!"
+                    return -1
+                else:
+                    if block(user_id, friend_id):
+                        print "Block successfully!!"
+            else:
+                print "Invalid option, please try again"
+                return -1
+        else:
+            print "No friends"
+            return -1
+    except Exception as Ex:
+        print(Ex)
+        return -1
 
-if __name__ == '__main__':
-   print group_friend_by_lives_in(1)
+
+def display_unblock(user_id):
+    try:
+        list_block = view_list_block(user_id)
+        if list_block and len(list_block) > 0:
+            index = 0
+            for user in list_block:
+                index += 1
+                print "{} .{}".format(index, user['username'])
+
+            print "Choose number (in list): to delete"
+            number = int(raw_input("Number:\t"))
+            if 0 < number <= len(list_block):
+                index = number - 1
+                user_id_blocked = list_block[index]['user_id_blocked']
+                if remove_block(user_id, user_id_blocked):
+                    print "Unblock successfully!!"
+            else:
+                print "Invalid option, please try again"
+        else:
+            print "No friend is blocked"
+    except Exception as Ex:
+        print (Ex)
+        return -1
+
+
+def friends(user_id):
+    while True:
+        option = display_menu(3)
+        if option == 1:
+            '''
+                View
+            '''
+            display_view_friend(user_id)
+        elif option == 2:
+            '''
+                Add friend
+            '''
+            display_add_friend(user_id)
+        elif option == 3:
+            '''
+                Remove
+            '''
+            display_remove_friend(user_id)
+        elif option == 4:
+            '''
+                Block
+            '''
+            display_block_friend(user_id)
+        elif option == 5:
+            '''
+                unblock
+            '''
+            display_unblock(user_id)
+        elif option == 6:
+            print "Back to main"
+            break

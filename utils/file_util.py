@@ -1,7 +1,7 @@
 import json
 import os
 
-from message_mng.settings import PATH_CONFIG
+from messenger_mng.settings import PATH_CONFIG
 
 
 def load_config(file_config, dir_filename=PATH_CONFIG):

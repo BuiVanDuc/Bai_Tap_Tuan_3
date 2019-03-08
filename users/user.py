@@ -1,96 +1,83 @@
-from typing import Any, Union
+from functions import login, get_id, is_email_existed
+from functions import register
+from utils.date_util import validate_date
+from utils.email_util import is_email_validated
+from utils.password_util import encrypt_string, validate_password
 
-from utils.checking_data_util import is_blocked
-from utils.db_util import query_db
-from utils.password_util import encrypt_string
 
+def display_login():
+    username = raw_input("username:\t")
+    if username and len(username) > 0:
+        password = raw_input("password:\t")
+        if password and len(password) > 0:
+            password = encrypt_string(password)
 
-def register_account(email, fullname, birth_of_date, sex, username, password, lives_in=None):
-    query = "INSERT INTO USER_MESSENGER(email, fullname, birth_of_date, sex, username, password, lives_in)" \
-            "VALUES " \
-            "('{}','{}',{},'{}','{}','{}','{}')".format(email, fullname, birth_of_date, sex, username,
-                                                   password, lives_in)
-    if query_db(query):
-        return 1
-    return 0
-
-def login(username, password):
-    if len(username) > 0 and len(password) > 0:
-        encrypted_password = encrypt_string(password)
-        # Checking user
-        query = "SELECT * " \
-                "FROM USER_MESSENGER " \
-                "WHERE username='{}' and password='{}'".format(username, encrypted_password)
-
-        data_user = query_db(query, is_data_fetched=True)
-
-        if data_user and len(data_user) > 0:
-            for data in data_user:
-                # Change status login:
-                """
-                    "status_login":"1 --> user are logging, 0 --> user logout"
-                """
-                id = data['id']
-                query = "UPDATE USER_MESSENGER " \
-                        "SET status_login = 1 " \
-                        "WHERE " \
-                        "id = {}".format(id)
-
-                if query_db(query):
-                    print("login successfully")
-                    return id
-                else:
-                    print "Can not login"
+            if login(username, password):
+                user_id = get_id(username, password)
+                return user_id
+            else:
+                print "username, password is incorrect"
+                return -1
         else:
-            print 'account does not exist. Please enter 2 to register account'
+            print "password is empty!!"
+            return -1
     else:
-        print 'username and password is empty'
-    return 0
+        print "username is emtpy!!"
+        return -1
 
 
-def logout(user_id):
-    query = "UPDATE USER_MESSENGER " \
-            "SET status_login = 1 " \
-            "WHERE " \
-            "id ={};".format(user_id)
-    if query_db(query):
-        print "logout successfully"
-        return 1
-    print "Can not login"
-    return 0
-
-
-def search_username(username):
-    query = "SELECT id, username\t" \
-            "FROM user_messenger\t" \
-            "WHERE username like '%{}%'\torder by username ASC ".format(username)
-
-    list_username = query_db(query, is_data_fetched=True)  # type: Union[int, Any]
-
-    if list_username and len(list_username) > 0:
-        return list_username
-    print "user are not exist. Please try again!"
-
-
-def block_user(user_id, user_blocked):
-    if is_blocked(user_id, user_blocked):
-        print "User have been blocked before"
-
-    else:
-        print('User does not exist')
-
-    query = "INSERT INTO  blocking_user(user_id, blocked_user_id)\t" \
-            "VALUES\t" \
-            "({},{})".format(user_id, user_blocked)
-
-    if query_db(query):
-        print ('Blocked successfully')
-        return 1
-    else:
-        print('Can not blocked')
-
-    return 0
-
-
-if __name__ == '__main__':
-    register_account("Nguyen Van Tuan", "1988-02-12", "")
+def display_register():
+    email, fullname, birth_of_date, username, password, lives_in = "", "", "", "", "", ""
+    sex = 1
+    flag = 0
+    while True:
+        if is_email_validated(email):
+            if is_email_existed(email):
+                print "email account have existed. Please enter other email"
+                email = ""
+            else:
+                if len(fullname) > 0:
+                    if flag:
+                        pass
+                    else:
+                        try:
+                            print "(Sex) 0 -> male,1 -> female, Other"
+                            sex = int(raw_input('Sex:\t'))
+                            print "lives in can be empty"
+                            lives_in = raw_input("lives_in:\t")
+                            flag = 1
+                        except Exception as Ex:
+                            print (Ex)
+                            return -1
+                    if validate_date(birth_of_date):
+                        if len(username) > 0:
+                            if validate_password(password):
+                                confirm_password = raw_input("confirm_password:\t")
+                                if confirm_password == password:
+                                    password = encrypt_string(password)
+                                    if register(email, fullname, birth_of_date, sex, username,
+                                                password,
+                                                lives_in):
+                                        print "Register successfully"
+                                        break
+                                    else:
+                                        print "Can not register"
+                                        break
+                                else:
+                                    print "Password confirmation doesn't match password"
+                            else:
+                                password = raw_input("Password:\t")
+                        else:
+                            username = raw_input("Username:\t")
+                            if len(username) < 0:
+                                print " username is empty. Please enter your username"
+                    else:
+                        birth_of_date = raw_input("Date of birth:\t")
+                else:
+                    fullname = raw_input("Fullname:\t")
+                    if len(fullname) < 0:
+                        print " fullname is empty. Please enter your fullname"
+        else:
+            email = raw_input("email:\t")
+            if not is_email_validated(email):
+                print "email is invalidated. Please enter email again!!"

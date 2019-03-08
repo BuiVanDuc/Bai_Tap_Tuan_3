@@ -1,7 +1,7 @@
 from main import show_list_friends, show_list_messages, add_friend
-from friends.friend import show_list_friends, detail_friend
-from users.user import block_user
-from messages.message import show_list_messages
+from friends.functions import show_list_friends, detail_friend
+from users.functions import block_user
+from messages.functions import show_list_messages
 # if user_id exist return list friend else return 'NO friend'
 # user_id =1
 # show_list_messages(user_id)

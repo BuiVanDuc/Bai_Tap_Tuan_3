@@ -1,146 +1,271 @@
-from utils.checking_data_util import is_blocked
-from utils.db_util import query_db
+from friends.functions import view_friends_by_contact_time
+from functions import detail_message, sent_message, view_message
+from messenger_mng.messenger_mng import display_menu
+from users.functions import search_username, is_blocked, get_user_info_by_id
+
+MENU_SEND = '''\n MANAGER SENT MESSAGE
+1. Enter Name
+2. View list friends
+3. Back to Message
+'''
 
 
-def show_list_messages(user_id):
-    # messages sent to friend
-    query_message_sent = "SELECT message.recipient_id, user_messenger.username, message.message_content, message.delivered_time, message.seen\t" \
-                         "FROM message\t" \
-                         "INNER JOIN user_messenger\t" \
-                         "ON message.recipient_id =user_messenger.id\t" \
-                         "WHERE message.sender_id ={}\tORDER BY delivered_time DESC".format(user_id)
-
-    # incoming message
-    query_incoming_message = "SELECT message.sender_id, user_messenger.username, message.message_content, message.delivered_time, message.seen\t" \
-                             "FROM message\t" \
-                             "INNER JOIN user_messenger\t" \
-                             "ON message.sender_id =user_messenger.id\t" \
-                             "WHERE message.recipient_id ={}\tORDER BY delivered_time DESC".format(user_id)
-
-    ret_incoming_messages = list()
-    ret_messages_sent = list()
-
-    # all incoming messages
-    list_incoming_messages = query_db(query_incoming_message, is_data_fetched=True)
-    # Group incoming message by id and username
-    """
-        {"sender_id":1, "username":'bachdv', "list_messages":[{"message_content":"hi", "delivered_time":'2019-02-16-4T-78-09,"seen":False},...]
-    """
-    if len(list_incoming_messages) > 0:
-        list_ids = list()
-
-        for i in range(len(list_incoming_messages)):
-            list_messages = list()
-            message = dict()
-            info_message = dict()
-            if list_incoming_messages[i]['sender_id'] not in list_ids:
-                list_ids.append(list_incoming_messages[i]['sender_id'])
-                message["message_content"] = list_incoming_messages[i]['message_content'],
-                message['delivered_time'] = list_incoming_messages[i]['delivered_time'],
-                message["seen"] = list_incoming_messages[i]['seen']
-                list_messages.append(message.copy())
-
-                j = i + 1
-                while j <= len(list_incoming_messages) - 2:
-                    if list_incoming_messages[i]['sender_id'] == list_incoming_messages[j]['sender_id']:
-                        message["message_content"] = list_incoming_messages[j]['message_content'],
-                        message['delivered_time'] = list_incoming_messages[j]['delivered_time'],
-                        message["seen"] = list_incoming_messages[j]['seen']
-                        list_messages.append(message.copy())
-                    j += 1
-
-                info_message['sender_id'] = list_incoming_messages[i]['sender_id']
-                info_message['username'] = list_incoming_messages[i]['username']
-                info_message['list_messages'] = list_messages
-                ret_incoming_messages.append(info_message.copy())
-
-    # all messages sent
-    list_messages_sent = query_db(query_message_sent, is_data_fetched=True)
-    if len(list_messages_sent) > 0:
-        list_ids = list()
-
-        for i in range(len(list_messages_sent)):
-            list_messages = list()
-            message = dict()
-            info_message = dict()
-            if list_messages_sent[i]['recipient_id'] not in list_ids:
-                list_ids.append(list_messages_sent[i]['recipient_id'])
-                message["message_content"] = list_messages_sent[i]['message_content'],
-                message['delivered_time'] = list_messages_sent[i]['delivered_time'],
-                message["seen"] = list_messages_sent[i]['seen']
-                list_messages.append(message.copy())
-
-                j = i + 1
-                while j <= len(list_messages_sent) - 2:
-                    if list_messages_sent[i]['recipient_id'] == list_messages_sent[j]['recipient_id']:
-                        message["message_content"] = list_messages_sent[j]['message_content'],
-                        message['delivered_time'] = list_messages_sent[j]['delivered_time'],
-                        message["seen"] = list_messages_sent[j]['seen']
-                    j += 1
-
-                info_message['recipient_id'] = list_messages_sent[i]['recipient_id']
-                info_message['username'] = list_messages_sent[i]['username']
-                info_message['list_messages'] = list_messages
-                ret_messages_sent.append(info_message.copy())
-
-    return ret_incoming_messages, ret_messages_sent
+def display_message_send():
+    try:
+        print MENU_SEND
+        option = raw_input("Choose your option: ")
+        return int(option)
+    except Exception as ex:
+        print ex
+        return -1
 
 
-def show_detail_message(user_id, friend_id):
+def display_view_detail_message(user_id, username):
+    ret_data = view_message(user_id, username)
 
-    query = "SELECT *\t" \
-            "FROM\t" \
-            "MESSAGE\t" \
-            "WHERE (sender_id ={} and recipient_id={}) or (sender_id ={} and recipient_id ={})\tORDER BY delivered_time ASC ".format(
-        user_id, friend_id,
-        friend_id, user_id)
-
-    list_data = query_db(query, is_data_fetched=True)
-
-    if list_data and len(list_data) > 0:
-        # update seen is true
-        query = "UPDATE message\t" \
-                "SET seen=1\t" \
-                "WHERE (sender_id ={} and recipient_id={}) or (sender_id ={} and recipient_id ={})".format(user_id,
-                                                                                                           friend_id,
-                                                                                                           friend_id,
-                                                                                                           user_id)
-        query_db(query)
-
-    return list_data
-
-
-def sent_message(recipient_id, message, sender_id):
-
-    # check table block
-    if is_blocked(recipient_id, sender_id):
-        print "You can not sent message, You are block by the friend"
-        return 0
-
-    if message and len(message) > 0:
-        query = "INSERT INTO MESSAGE(sender_id, recipient_id, message_content)\t" \
-                "VALUES\t" \
-                "({},{},'{}')".format(sender_id, recipient_id, message)
-
-        if query_db(query):
-            print "Message sent successfully"
-            return 1
-        else:
-            print "Can not sent message"
+    index = 0
+    if ret_data and len(ret_data) > 0:
+        index += 1
+        for item in ret_data:
+            print "{}. {}\n\tmessages:{}".format(index, item['username'], item['list_messages'])
     else:
-        print "Message is empty! You need enter content message"
-    return 0
+        print 'Have no message'
+        return -1
+    try:
+
+        print '''MANAGER DETAIL MESSAGES
+                0: Exit
+                Other number(in list): view detail a message
+              '''
+
+        number = int(raw_input("Choose your option:\t"))
+        if number == 0:
+            print "Exit"
+        elif 0 < number <= len(ret_data):
+            index = number - 1
+            friend_id = ret_data[index]['recipient_id']
+            print detail_message(user_id, friend_id)
+            return friend_id
+        else:
+            print "invalid option !!!"
+            return -1
+    except Exception as ex:
+        print(ex)
+        return -1
 
 
-def count_message_unread(user_id):
-    query = "SELECT COUNT (*) as message_unread\t" \
-            "FROM message\t" \
-            "WHERE seen =false and recipient_id={}".format(user_id)
+def display_reply_message(user_id, friend_id):
+    try:
+        print '''MANAGER REPLY MESSAGE
+                0: Exit
+                1: Reply
+             '''
+        number = int(raw_input('Choose your option:\t'))
+        if number == 0:
+            print "Exit"
+            return -1
+        elif number == 1:
+            if is_blocked(user_id, friend_id) == 1:
+                print "Please Unblocked to sent message!!"
+                return -1
+            elif is_blocked(user_id, friend_id) == 2:
+                print "You are blocked, can not sent message!!"
+                return -1
+            else:
+                message_content = raw_input("Type a message:\t")
+                if message_content and len(message_content) > 0:
+                    if sent_message(friend_id, message_content, user_id):
+                        print "Sent message successfully"
+                    else:
+                        print "Can not sent message"
+                        return -1
+                else:
+                    print "Message is empty, please try again"
+                    return -1
+        else:
+            print "invalid option, please choose:0 or 1"
+            return -1
+    except Exception as Ex:
+        print(Ex)
+        return -1
 
-    number_messages_unread = query_db(query, is_data_fetched=True)
 
-    return number_messages_unread
+def display_send_message_by_search_username(user_id):
+    try:
+        username = raw_input("Search:\t")
+        if username and len(username) > 0:
+            list_username = search_username(username)
 
+            if list_username and len(list_username) > 0:
+                index = 0
+                for username in list_username:
+                    index += 1
+                    print "{}. {}".format(index, username['username'])
+
+                print "Choose number (in list) sent message"
+                number = int(raw_input("number:\t"))
+
+                if 0 < number <= len(list_username):
+                    index = number - 1
+                    recipient_id = list_username[index]['id']
+                    if is_blocked(user_id, recipient_id):
+                        print "Please unblock to sent message!!"
+                        return -1
+                    elif is_blocked(user_id, recipient_id) == 2:
+                        print "Can not sent message. You are blocked!!"
+                    else:
+                        message_content = raw_input("Type a message:\t")
+
+                        if message_content and len(message_content) > 0:
+                            if sent_message(recipient_id, message_content, user_id):
+                                print "Sent message successfully"
+                            else:
+                                print "Can not sent message !!"
+                                return -1
+                        else:
+                            print "Message content is empty, please try again"
+                            return -1
+                elif number ==0:
+                    print "Back to message"
+                else:
+                    print "Invalid option, please try again"
+            else:
+                print "No result"
+                return -1
+        else:
+            print "Username is empty, please try again!!"
+            return -1
+    except Exception as Ex:
+        print (Ex)
+        return -1
+
+
+def display_sent_message_by_list_friend(user_id):
+    try:
+        list_friends = view_friends_by_contact_time(user_id)
+
+        if list_friends and len(list_friends) > 0:
+            index = 0
+            for friend in list_friends:
+                index += 1
+                print "{}. {}".format(index, friend['nickname'])
+
+            print "Choose number (in list) sent message"
+            number = int(raw_input("number:\t"))
+
+            if 0 < number <= len(list_friends):
+                index = number - 1
+                recipient_id = list_friends[index]['friend_id']
+
+                # Check block
+                if is_blocked(user_id, recipient_id) == 1:
+                    print "Please Unblock to sent message"
+                    return -1
+                elif is_blocked(user_id, recipient_id) == 2:
+                    print "Can not sent message. You are blocked!!"
+                    return -1
+                else:
+                    message_content = raw_input("Type a message:\t")
+
+                    if message_content and len(message_content) > 0:
+                        if sent_message(recipient_id, message_content, user_id):
+                            print "Sent message successfully!!"
+                        else:
+                            print "Can not sent message"
+                            return -1
+                    else:
+                        print "Message content is empty, please try again"
+                        return -1
+            else:
+                print "option invalid, please try again!!"
+                return -1
+        else:
+            print "No have friend"
+            return -1
+    except Exception as Ex:
+        print Ex
+        return -1
+
+
+def display_message(user_id):
+    username = get_user_info_by_id(user_id)['username']
+    messages = view_message(user_id, username)
+
+    if messages and len(messages) > 0:
+        index = 0
+        for message in messages:
+            index += 1
+            if 'unread' in message:
+                print "{}. {} - unread:{}".format(index, message['username'], message['unread'])
+            else:
+                print "{}. {}".format(index, message['username'])
+
+        print ''' 
+                    0: Exit
+                    Other number(in list message): view detail a message
+        '''
+        try:
+            number = int(raw_input('Number:\t'))
+            if number == 0:
+                print "Exit"
+                return -1
+            elif 0 < number <= len(messages):
+                index = number - 1
+                friend_id = messages[index]['id']
+                friend_name = messages[index]['username']
+                list_data = detail_message(user_id, friend_id)
+
+                for data in list_data:
+                    if data['sender_id'] == 1:
+                        print "{}: {} - {}".format(friend_name, data['message_content'], data['delivered_time'])
+                    elif data['recipient_id'] == 1:
+                        print "\t{}: {} - {}".format('me', data['message_content'], data['delivered_time'])
+                return friend_id
+            else:
+                print "Invalid number, please try again!!"
+                return -1
+        except Exception as Ex:
+            print (Ex)
+            return -1
+    else:
+        print "No message"
+        return -1
+
+
+def messages(user_id):
+    while True:
+        option = display_menu(2)
+        if option == 1:
+            '''
+                View
+            '''
+            while True:
+                print "Chats"
+                friend_id = display_message(user_id)
+                if friend_id != -1:
+                    display_reply_message(user_id, friend_id)
+                else:
+                    break
+
+        elif option == 2:
+            '''
+                Message - Send
+            '''
+            while True:
+                option = display_message_send()
+                if option == 1:
+                    display_send_message_by_search_username(user_id)
+                elif option == 2:
+                    display_sent_message_by_list_friend(user_id)
+                elif option == 3:
+                    print "Back to message"
+                    break
+                else:
+                    print "invalid option, please try again"
+                    return -1
+        elif option == 3:
+            print 'Back to main'
+            break
 
 if __name__ == '__main__':
-    print show_detail_message(1, 4)
+    messages(1, 'ducbv')

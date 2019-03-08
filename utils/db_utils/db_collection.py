@@ -1,6 +1,6 @@
 import sqlite3
 
-from message_mng.settings import DATABASE_PATH
+from messenger_mng.settings import DATABASE_PATH
 
 
 def connect_to_sqlite(db_path=DATABASE_PATH):
@@ -8,13 +8,12 @@ def connect_to_sqlite(db_path=DATABASE_PATH):
         # connect to the sqlite server
         conn = sqlite3.connect(db_path)
         if conn is not None:
-            print('Successfully connect to Database')
             return conn
     except (Exception, sqlite3.DatabaseError) as error:
         print ("CONNECTING TO THE DB IS ERROR" + ":" + str(error))
 
 
-def query_db(query, is_data_fetched=False):
+def query_db(query, params, is_data_fetched=False):
     try:
         conn = connect_to_sqlite()
         if conn is not None:
@@ -22,13 +21,13 @@ def query_db(query, is_data_fetched=False):
             cur = conn.cursor()
             # execute a statement
             if is_data_fetched:
-                list_data = dict_gen(cur.execute(query))
+                list_data = dict_gen(cur.execute(query, params))
                 conn.commit()
                 # close communication with the database
                 cur.close()
                 return list_data
 
-            cur.execute(query)
+            cur.execute(query, params)
 
             if cur.rowcount ==1 or cur.lastrowid:
                 conn.commit()
@@ -51,7 +50,8 @@ def dict_gen(curs):
 
     rows = curs.fetchall()
     if not rows:
-        return
+        return rows
+
     list_data = list()
     for row in rows:
         list_data.append(dict(itertools.izip(field_names, row)))
