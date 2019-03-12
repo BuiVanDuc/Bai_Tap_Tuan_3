@@ -24,7 +24,7 @@ def login(username, password):
 
 
 def logout(user_id):
-    if query_db(QUERY_LOGOUT, (user_id)):
+    if query_db(QUERY_LOGOUT, (user_id,)):
         print "logout successfully"
         return True
     print "(Waring) Can not logout"

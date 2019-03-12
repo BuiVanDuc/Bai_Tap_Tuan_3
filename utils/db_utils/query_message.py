@@ -19,7 +19,7 @@ where (sender_id =? and recipient_id=?) or (sender_id =? and recipient_id =?) or
 # query for update incoming message seen is true
 QUERY_MESSAGE_SEEN = '''update message
 set seen=1
-where recipient_id=?'''
+where recipient_id=? and sender_id=?'''
 
 # query for sent message
 QUERY_SENT_MESSAGE = '''insert into message(recipient_id, message_content, sender_id)

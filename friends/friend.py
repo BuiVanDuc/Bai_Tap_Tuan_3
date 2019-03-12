@@ -10,7 +10,10 @@ def display_search_friend(user_id, username):
     list_friends = search_friend(user_id, username)
 
     if list_friends and len(list_friends) > 0:
-        print list_friends
+        index = 0
+        for friend in list_friends:
+            index += 1
+            print "{}. {}".format(index, friend['nickname'])
         try:
             print "Choose number in list to sent message"
             index = raw_input('Choose number:\t')
@@ -120,12 +123,12 @@ def display_view_friends_by_contact_time(user_id):
                     message_content = raw_input("Type a message:\t")
                     if message_content and len(message_content) > 0:
                         if is_blocked(user_id, friend_id) ==1:
-                            print "You have blocked {}. Unblock to sent message!!".format(list_friends[index]['nickname'])
+                            print "You have blocked friend {}. Unblock to sent message!!".format(list_friends[index]['nickname'])
                             return -1
-                        if is_blocked(friend_id, user_id) ==2:
+                        if is_blocked(user_id, friend_id) ==2:
                             print "You were blocked by {}. Can not sent message!!.".format(list_friends[index]['nickname'])
                             return -1
-                        elif is_blocked(friend_id, user_id) == 0:
+                        elif is_blocked(user_id, friend_id) == 0:
                             if sent_message(friend_id, message_content, user_id):
                                 print "Sent message successfully!!"
                         else:

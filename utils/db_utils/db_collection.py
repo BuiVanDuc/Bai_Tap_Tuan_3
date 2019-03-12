@@ -29,7 +29,7 @@ def query_db(query, params, is_data_fetched=False):
 
             cur.execute(query, params)
 
-            if cur.rowcount ==1 or cur.lastrowid:
+            if cur.rowcount >= 1 or cur.lastrowid:
                 conn.commit()
                 # close communication with the database
                 cur.close()
@@ -39,7 +39,7 @@ def query_db(query, params, is_data_fetched=False):
 
     except (Exception, sqlite3.DatabaseError) as error:
         print('Query is not valid' + ":" + str(error))
-    return 0
+        return 0
 
 
 def dict_gen(curs):

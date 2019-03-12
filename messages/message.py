@@ -3,7 +3,7 @@ from functions import detail_message, sent_message, view_message
 from messenger_mng.messenger_mng import display_menu
 from users.functions import search_username, is_blocked, get_user_info_by_id
 
-MENU_SEND = '''\n MANAGER SENT MESSAGE
+MENU_SEND = '''MANAGER SENT MESSAGE
 1. Enter Name
 2. View list friends
 3. Back to Message
@@ -31,8 +31,8 @@ def display_view_detail_message(user_id, username):
     else:
         print 'Have no message'
         return -1
-    try:
 
+    try:
         print '''MANAGER DETAIL MESSAGES
                 0: Exit
                 Other number(in list): view detail a message
@@ -216,10 +216,10 @@ def display_message(user_id):
                 list_data = detail_message(user_id, friend_id)
 
                 for data in list_data:
-                    if data['sender_id'] == 1:
-                        print "{}: {} - {}".format(friend_name, data['message_content'], data['delivered_time'])
-                    elif data['recipient_id'] == 1:
-                        print "\t{}: {} - {}".format('me', data['message_content'], data['delivered_time'])
+                    if data['sender_id'] == user_id:
+                        print "{}: {} - {}".format('me', data['message_content'], data['delivered_time'])
+                    elif data['recipient_id'] == user_id:
+                        print "\t{}: {} - {}".format(friend_name, data['message_content'], data['delivered_time'])
                 return friend_id
             else:
                 print "Invalid number, please try again!!"
@@ -240,16 +240,15 @@ def messages(user_id):
                 View
             '''
             while True:
-                print "Chats"
+                print "*****Chats*****"
                 friend_id = display_message(user_id)
                 if friend_id != -1:
                     display_reply_message(user_id, friend_id)
                 else:
                     break
-
         elif option == 2:
             '''
-                Message - Send
+                Send message
             '''
             while True:
                 option = display_message_send()
@@ -261,11 +260,8 @@ def messages(user_id):
                     print "Back to message"
                     break
                 else:
-                    print "invalid option, please try again"
+                    print "invalid option, choose options: 1,2 or 3"
                     return -1
         elif option == 3:
             print 'Back to main'
             break
-
-if __name__ == '__main__':
-    messages(1, 'ducbv')

@@ -10,23 +10,22 @@ def view_friends_by_contact_time(user_id):
     # Query friend in message
     list_friends_in_message = query_db(QUERY_FRIENDS_IN_MESSAGE, (user_id,), is_data_fetched=True)
     list_friend_ids = list()
-    list_friends = list()
+    ret_data = list()
 
     if len(list_friends_in_message) > 0:
         for friend in list_friends_in_message:
             if friend['friend_id'] not in list_friend_ids:
                 list_friend_ids.append(friend['friend_id'])
-                list_friends.append(friend)
+                ret_data.append(friend)
 
-    if len(list_friend_ids) > 0:
-        # have no any friend in message:
-        list_friends_not_in_message = query_db(QUERY_FRIENDS, (user_id,), is_data_fetched=True)
-        if len(list_friends_not_in_message) > 0:
-            for friend in list_friends_not_in_message:
-                if friend['friend_id'] not in list_friend_ids:
-                    list_friends.append(friend)
+    # all friend
+    list_friends = query_db(QUERY_FRIENDS, (user_id,), is_data_fetched=True)
+    if len(list_friends) > 0:
+        for friend in list_friends:
+            if friend['friend_id'] not in list_friend_ids:
+                ret_data.append(friend)
 
-    return list_friends
+    return ret_data
 
 
 def view_friends(user_id):

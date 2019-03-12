@@ -33,7 +33,7 @@ def display_register():
     while True:
         if is_email_validated(email):
             if is_email_existed(email):
-                print "email account have existed. Please enter other email"
+                print "email account have existed. Please enter other email !!"
                 email = ""
             else:
                 if len(fullname) > 0:

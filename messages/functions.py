@@ -12,16 +12,10 @@ def view_message(user_id, username):
     list_ids = list()
     ret_data = list()
 
+    # list message unread
     for message in messages:
         item = dict()
-        if message['sender_id'] == user_id:
-            if message['recipient_id'] not in list_ids:
-                list_ids.append(message['recipient_id'])
-
-                item['id'] = message['recipient_id']
-                item['username'] = message['username']
-                ret_data.append(item.copy())
-        elif message['recipient_id'] == user_id:
+        if message['recipient_id'] == user_id:
             if message['sender_id'] not in list_ids:
                 list_ids.append(message['sender_id'])
 
@@ -30,13 +24,23 @@ def view_message(user_id, username):
 
                 item['unread'] = 0
                 if message['seen'] == 0:
-                    item['unread'] += 1
+                    item['unread'] = 1
                 ret_data.append(item.copy())
-
-            elif message['sender_id'] in list_ids:
+            else:
                 if message['seen'] == 0:
                     for item in ret_data:
-                        item['unread'] += 1
+                        if message['sender_id'] == item['id']:
+                            item['unread'] += 1
+    # list message sent
+    for message in messages:
+        item = dict()
+        if message['sender_id'] == user_id:
+            if message['recipient_id'] not in list_ids:
+                list_ids.append(message['recipient_id'])
+                item['id'] = message['recipient_id']
+                item['username'] = message['username']
+                ret_data.append(item.copy())
+
     return ret_data
 
 
@@ -45,8 +49,10 @@ def detail_message(user_id, friend_id):
 
     if messages and len(messages) > 0:
         # update message seen is true
-        if query_db(QUERY_MESSAGE_SEEN, (user_id,)):
-            return messages
+        for message in messages:
+            if message['recipient_id'] == user_id:
+                query_db(QUERY_MESSAGE_SEEN, (user_id, friend_id,))
+        return messages
     print "Have no detail message"
 
 
@@ -76,12 +82,3 @@ def is_user_existed(user_id):
     if query_db(QUERY_USER, (user_id,)):
         return True
     return False
-
-if __name__ == '__main__':
-    messages = detail_message(1,2)
-
-    for message in messages:
-        if message['sender_id'] ==1:
-            print "{} - {}".format(message['message_content'], message['delivered_time'])
-        elif message['recipient_id'] ==1:
-            print "\t{} - {}".format(message['message_content'], message['delivered_time'])
